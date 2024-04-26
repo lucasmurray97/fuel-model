@@ -33,14 +33,16 @@ train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
 validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=8)
 
 net = ModisTempNet()
-net.load_state_dict(torch.load("networks/weights/Modis-Net_20.pth"))
+net.load_state_dict(torch.load("networks/weights/Modis-Net_100.pth"))
 net.eval()
+print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+
 total_wins = 0
 total = 0
 metric = MulticlassAccuracy()
 metric2 = MulticlassConfusionMatrix(20)
 metric3 = MulticlassAccuracy(average=None, num_classes=20)
-for x, y in tqdm(validation_loader):
+for x, y in tqdm(train_loader):
     pred = net(x)
     probs = net.softmax(pred)
     winners = probs.argmax(dim=1)
@@ -59,5 +61,5 @@ ax.matshow(confusion_matrix.numpy())
 for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
     ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 plt.show()
-plt.savefig("cfm")
+plt.savefig("cfm.png")
 print(metric3.compute())
