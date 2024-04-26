@@ -11,13 +11,16 @@ class ConvNet(nn.Module):
     def __init__(self, params = {}):
         super(ConvNet, self).__init__()
         self.name = "Conv-Net"
-        self.conv1 = nn.Conv2d(in_channels=71, out_channels=8, kernel_size=(4,4), stride=(4,4))
-        self.bn1 = nn.BatchNorm2d(8)
-        self.max_pool_1 = nn.MaxPool2d(2)
-        self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3,3)) # (64, 10, 10)
-        self.bn2 = nn.BatchNorm2d(16)
-        self.max_pool_2 = nn.MaxPool2d(3)
-        self.fc_1 = nn.Linear(in_features=1600, out_features=256)
+        self.conv1 = nn.Conv2d(in_channels=71, out_channels=16, kernel_size=(4,4), stride=(4,4))
+        self.bn1 = nn.BatchNorm2d(16)
+        self.max_pool_1 = nn.MaxPool2d(3)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(3,3)) # (64, 10, 10)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.max_pool_2 = nn.MaxPool2d(2)
+        self.conv3 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(2,2)) # (64, 10, 10)
+        self.bn3 = nn.BatchNorm2d(32)
+        self.max_pool_3 = nn.MaxPool2d(2)
+        self.fc_1 = nn.Linear(in_features=512, out_features=256)
         self.bn4 = nn.BatchNorm1d(256)
         self.fc_2 = nn.Linear(in_features=256, out_features=20)
         self.softmax = torch.nn.Softmax(dim=1) 
@@ -31,8 +34,13 @@ class ConvNet(nn.Module):
 
     def forward(self, x):
         x = self.max_pool_1(F.relu(self.bn1(self.conv1(x))))
+        #print(x.shape)
         x = self.max_pool_2(F.relu(self.bn2(self.conv2(x))))
+        #print(x.shape)
+        x = self.max_pool_3(F.relu(self.bn3(self.conv3(x))))
+        #print(x.shape)
         x = torch.flatten(x, start_dim=1)
+        #print(x.shape)
         x = F.relu(self.bn4(self.fc_1(x)))
         x = self.fc_2(x)
         return x

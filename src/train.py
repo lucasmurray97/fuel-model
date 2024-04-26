@@ -48,6 +48,7 @@ test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
 
 early_stopper = EarlyStopper(patience=5, min_delta=0.01)
 net = ConvNet()
+print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 net.cuda()
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
 for epoch in tqdm(range(epochs)):
