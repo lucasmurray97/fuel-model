@@ -22,7 +22,9 @@ class ConvNet(nn.Module):
         self.max_pool_3 = nn.MaxPool2d(2)
         self.fc_1 = nn.Linear(in_features=512, out_features=256)
         self.bn4 = nn.BatchNorm1d(256)
-        self.fc_2 = nn.Linear(in_features=256, out_features=20)
+        self.fc_2 = nn.Linear(in_features=256, out_features=128)
+        self.bn5 = nn.BatchNorm1d(128)
+        self.fc_3 = nn.Linear(in_features=128, out_features=20)
         self.softmax = torch.nn.Softmax(dim=1) 
         self.loss_func = nn.CrossEntropyLoss()
         self.training_loss = []
@@ -42,7 +44,8 @@ class ConvNet(nn.Module):
         x = torch.flatten(x, start_dim=1)
         #print(x.shape)
         x = F.relu(self.bn4(self.fc_1(x)))
-        x = self.fc_2(x)
+        x = F.relu(self.bn5(self.fc_2(x)))
+        x = self.fc_3(x)
         return x
     
     def train_loss(self, pred, y):
