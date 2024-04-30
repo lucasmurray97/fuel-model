@@ -84,7 +84,7 @@ for x, y in tqdm(train_loader):
     pred = net(x)
     probs = net.softmax(pred)
     winners = probs.argmax(dim=1)
-    target = y.argmax(dim=1)
+    target = y.squeeze(1)
     metric.update(winners, target)
     metric2.update(winners, target)
     metric3.update(winners, target)

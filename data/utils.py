@@ -66,8 +66,7 @@ class MyDataset(torch.utils.data.Dataset):
         src = rasterio.open(f'{self.root}/ID{id_}.tif')
         data = src.read()
         n_class = self.translation[class_]
-        y = torch.zeros(self.n_classes)
-        y[n_class] = 1.
+        y = torch.tensor([n_class], dtype=torch.int64)
         x = torch.from_numpy(data[:,:10,:10])
         n_bands = x.shape[0]
         for i in range(n_bands):
