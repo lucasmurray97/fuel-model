@@ -24,7 +24,7 @@ from networks.ConvNet import ConvNet
 from networks.utils import EarlyStopper
 sys.path.append("../")
 from data.utils import MyDataset, Resize
-from torcheval.metrics import MulticlassAccuracy, MulticlassConfusionMatrix
+from torcheval.metrics import MulticlassAccuracy, MulticlassConfusionMatrix, MulticlassF1Score, MulticlassPrecision, MulticlassRecall
 import json
 import argparse
 
@@ -80,6 +80,9 @@ net.eval()
 metric = MulticlassAccuracy()
 metric2 = MulticlassConfusionMatrix(20)
 metric3 = MulticlassAccuracy(average=None, num_classes=20)
+metric4 = MulticlassF1Score(num_classes=20)
+metric5 = MulticlassPrecision(num_classes=20)
+metric6 = MulticlassRecall(num_classes=20)
 for x, y in tqdm(train_loader):
     pred = net(x)
     probs = net.softmax(pred)
@@ -88,9 +91,15 @@ for x, y in tqdm(train_loader):
     metric.update(winners, target)
     metric2.update(winners, target)
     metric3.update(winners, target)
+    metric4.update(winners, target)
+    metric5.update(winners, target)
+    metric6.update(winners, target)
 results = {}
 results["accuracy"] = metric.compute().item()
 results["accuracy_per_class"] = metric3.compute().tolist()
+results["f1"] = metric4.compute().item()
+results["precision"] = metric5.compute().item()
+results["recall"] = metric6.compute().item()
 with open(f'plots/results_{net.name}_{epochs}.json', 'w') as f:
     json.dump(results, f)
 
