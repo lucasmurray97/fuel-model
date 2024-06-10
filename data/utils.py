@@ -9,6 +9,7 @@ import pickle
 from matplotlib import pyplot as plt
 from torchvision.io import read_image
 from torchvision import transforms
+from torchvision.transforms import v2
 from torch.utils.data import DataLoader
 import fiona
 import rasterio
@@ -28,7 +29,7 @@ class MyDataset(torch.utils.data.Dataset):
         root (str): directory where data is being stored
         tform (Transform): tranformation to be applied at sampling time.
     """
-    def __init__(self, root="./Ventanas", tform=None):
+    def __init__(self, root=".Ventanas_augmented", tform=None):
         super(MyDataset, self).__init__()
         self.root = root
         self.classification = pd.read_csv(f'{self.root}/database.csv')
