@@ -20,6 +20,7 @@ import rioxarray
 import sys
 from tqdm import tqdm
 from networks.ModisTempNet import ModisTempNet
+from networks.ResNet import ResNet_18
 from networks.ConvNet import ConvNet
 from networks.utils import EarlyStopper
 sys.path.append("../")
@@ -38,7 +39,7 @@ epochs = args.epochs
 lr = args.lr
 wd = args.weight_decay
 transform = transforms.Compose([Resize()])
-dataset = MyDataset(root="../data/Ventanas", tform = transform)
+dataset = MyDataset(root="../data/Ventanas_augmented", tform = transform)
 
 generator = torch.Generator().manual_seed(123)
 train_dataset, validation_dataset, test_dataset =torch.utils.data.random_split(dataset, [0.7, 0.15, 0.15], generator)
@@ -59,10 +60,7 @@ for epoch in tqdm(range(epochs)):
         loss.backward()
         optimizer.step()
     print(f"Training Loss: {net.epoch_loss/net.n}")
-    if early_stopper.early_stop(net.epoch_loss):             
-      print("Early stoppage at epoch:", epoch)
-      break
-    """
+    
     for x, y in validation_loader:
         pred = net(x.cuda())
         loss = net.val_loss(pred, y.cuda())
@@ -71,7 +69,6 @@ for epoch in tqdm(range(epochs)):
     if early_stopper.early_stop(net.val_epoch_loss):             
       print("Early stoppage at epoch:", epoch)
       break
-    """
     net.reset_losses()
 net.finish(epochs)
 
@@ -113,3 +110,41 @@ ax.matshow(confusion_matrix.numpy())
 for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
     ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
 plt.savefig(f"plots/cfm_{net.name}_{epochs}.png")
+
+metric_ = MulticlassAccuracy()
+metric_2 = MulticlassConfusionMatrix(20)
+metric_3 = MulticlassAccuracy(average=None, num_classes=20)
+metric_4 = MulticlassF1Score(average="macro", num_classes=20)
+metric_5 = MulticlassPrecision(average="macro", num_classes=20)
+metric_6 = MulticlassRecall(average="macro", num_classes=20)
+for x, y in tqdm(validation_loader):
+    pred = net(x)
+    probs = net.softmax(pred)
+    winners = probs.argmax(dim=1)
+    target = y.squeeze(1)
+    metric_.update(winners, target)
+    metric_2.update(winners, target)
+    metric_3.update(winners, target)
+    metric_4.update(winners, target)
+    metric_5.update(winners, target)
+    metric_6.update(winners, target)
+results = {}
+results["accuracy"] = metric_.compute().item()
+results["accuracy_per_class"] = metric_3.compute().tolist()
+results["f1"] = metric_4.compute().item()
+results["precision"] = metric_5.compute().item()
+results["recall"] = metric_6.compute().item()
+with open(f'plots/results_val_{net.name}_{300}.json', 'w') as f:
+    json.dump(results, f)
+
+confusion_matrix = metric_2.compute()
+fig, ax = plt.subplots()
+fig.set_figwidth(15)
+fig.set_figheight(15)
+# Using matshow here just because it sets the ticks up nicely. imshow is faster.
+ax.matshow(confusion_matrix.numpy())
+
+for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
+    ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
+plt.savefig(f"plots/cfm_val_{net.name}_{300}.png")
+
