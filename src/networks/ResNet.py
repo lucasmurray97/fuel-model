@@ -53,9 +53,9 @@ class ResNet_18(nn.Module):
         self.training_loss.append(self.epoch_loss / self.n)
         self.epoch_loss = 0
         self.n = 0
-        #self.validation_loss.append(self.val_epoch_loss / self.m)
-        #self.val_epoch_loss = 0
-        #self.m = 0
+        self.validation_loss.append(self.val_epoch_loss / self.m)
+        self.val_epoch_loss = 0
+        self.m = 0
     
     def plot_loss(self, epochs):
         self.to("cpu")
