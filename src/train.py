@@ -40,7 +40,7 @@ lr = args.lr
 wd = args.weight_decay
 transform = transforms.Compose([Resize()])
 dataset = MyDataset(root="../data/Ventanas_augmented", tform = transform)
-
+print(len(dataset))
 generator = torch.Generator().manual_seed(123)
 train_dataset, validation_dataset, test_dataset =torch.utils.data.random_split(dataset, [0.7, 0.15, 0.15], generator)
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
@@ -48,7 +48,7 @@ validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=8
 test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
 
 early_stopper = EarlyStopper(patience=5, min_delta=0.01)
-net = ConvNet()
+net = ResNet_18()
 print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 net.cuda()
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
@@ -62,6 +62,7 @@ for epoch in tqdm(range(epochs)):
     print(f"Training Loss: {net.epoch_loss/net.n}")
     
     for x, y in validation_loader:
+        print(x.shape)
         pred = net(x.cuda())
         loss = net.val_loss(pred, y.cuda())
     
