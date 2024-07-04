@@ -21,7 +21,6 @@ import rioxarray
 import sys
 from tqdm import tqdm
 sys.path.append("../src/")
-from networks.ModisTempNet import ModisTempNet
 
 class MyDataset(torch.utils.data.Dataset):
     """Creates dataset that sampes: (landscape, class).
@@ -32,7 +31,7 @@ class MyDataset(torch.utils.data.Dataset):
     def __init__(self, root=".Ventanas_augmented", tform=None):
         super(MyDataset, self).__init__()
         self.root = root
-        self.classification = pd.read_csv(f'{self.root}/database.csv')
+        self.classification = pd.read_csv(f'{self.root}/database_augmented.csv')
         unique_classes = self.classification.clase.unique()
         self.translation = {}
         for i, j in zip(unique_classes, [k for k in range(len(unique_classes))]):
