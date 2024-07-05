@@ -22,7 +22,7 @@ class AutoEncoder(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=(4,4), stride=2)
         self.conv4 = nn.Conv2d(in_channels=64, out_channels=71, kernel_size=(4,4), stride=3)
         self.sigmoid = nn.Sigmoid()
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.MSELoss(reduction="sum")
         self.device  = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # Inicialización de parámetros:
         nn.init.kaiming_uniform_(self.conv1.weight, mode='fan_in', nonlinearity='relu')
