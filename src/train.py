@@ -39,6 +39,7 @@ parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--weight_decay', type=float, default=0)
 parser.add_argument('--net', type=str, default="conv-net")
 parser.add_argument('--augment_data', action=argparse.BooleanOptionalAction, default=False)
+parser.add_argument('--batch_size', type=int, default = 32)
 
 args = parser.parse_args()
 epochs = args.epochs
@@ -46,6 +47,7 @@ lr = args.lr
 wd = args.weight_decay
 network = args.net
 augment_data = args.augment_data
+batch_size = args.batch_size
 
 nets = {
     "conv-net": ConvNet,
@@ -55,13 +57,15 @@ nets = {
     "res-net-34-pre": ResNet_Pre_34,
 }
 
-transform = transforms.Compose([Resize()])
+
+transform = transforms.Compose([]) if "pre" in network else  transforms.Compose([Resize()])
+print(transform)
 dataset = MyDataset(root="../data/Ventanas", tform = transform)
 generator = torch.Generator().manual_seed(123)
 train_dataset, validation_dataset, test_dataset =torch.utils.data.random_split(dataset, [0.7, 0.15, 0.15], generator)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
-validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=8, drop_last=True)
-test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
+validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=batch_size, drop_last=True)
+test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
 
 early_stopper = EarlyStopper(patience=5, min_delta=0.01)
 net = nets[network]()
