@@ -24,41 +24,67 @@ from networks.ResNet import ResNet_18
 from networks.ResNet34 import ResNet_34
 from networks.ConvNet import ConvNet
 from networks.ResNet_pre import ResNet_Pre_18
+from networks.ResNet_pre_34 import ResNet_Pre_34
 from networks.utils import EarlyStopper
 sys.path.append("../")
 from data.utils import MyDataset, Resize
 from torcheval.metrics import MulticlassAccuracy, MulticlassConfusionMatrix, MulticlassF1Score, MulticlassPrecision, MulticlassRecall
 import json
 import argparse
+from torchvision.transforms import v2
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--epochs', type=int, required=True, default = 100)
 parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--weight_decay', type=float, default=0)
+parser.add_argument('--net', type=str, default="conv-net")
+parser.add_argument('--augment_data', action=argparse.BooleanOptionalAction, default=False)
 
 args = parser.parse_args()
 epochs = args.epochs
 lr = args.lr
 wd = args.weight_decay
-transform = transforms.Compose([])
-dataset = MyDataset(root="../data/Ventanas_augmented", tform = transform)
-print(len(dataset))
+network = args.net
+augment_data = args.augment_data
+
+nets = {
+    "conv-net": ConvNet,
+    "res-net-18": ResNet_18,
+    "res-net-34": ResNet_34,
+    "res-net-18-pre": ResNet_Pre_18,
+    "res-net-34-pre": ResNet_Pre_34,
+}
+
+transform = transforms.Compose([Resize()])
+dataset = MyDataset(root="../data/Ventanas", tform = transform)
 generator = torch.Generator().manual_seed(123)
 train_dataset, validation_dataset, test_dataset =torch.utils.data.random_split(dataset, [0.7, 0.15, 0.15], generator)
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=32)
-validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=32, drop_last=True)
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
+validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=8, drop_last=True)
 test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=8)
 
 early_stopper = EarlyStopper(patience=5, min_delta=0.01)
-net = ResNet_Pre_18()
+net = nets[network]()
 print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 net.cuda()
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
+horizontal_flip = v2.RandomHorizontalFlip(p=1.)
+vertical_flip = v2.RandomVerticalFlip(p=1.)
 for epoch in tqdm(range(epochs)):
     for x, y in train_loader:
         optimizer.zero_grad()
         pred = net(x.cuda())
         loss = net.train_loss(pred, y.cuda())
+        if augment_data:
+            h_flip = horizontal_flip(x.cuda())
+            v_flip = horizontal_flip(x.cuda())
+            hv_flip = horizontal_flip(h_flip)
+            pred_h = net(h_flip)
+            pred_v = net(v_flip)
+            pred_hv = net(hv_flip)
+            loss += net.train_loss(pred_h, y.cuda())
+            loss += net.train_loss(pred_v, y.cuda())
+            loss += net.train_loss(pred_hv, y.cuda())
         loss.backward()
         optimizer.step()
     print(f"Training Loss: {net.epoch_loss/net.n}")

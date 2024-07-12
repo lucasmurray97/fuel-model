@@ -28,10 +28,10 @@ class MyDataset(torch.utils.data.Dataset):
         root (str): directory where data is being stored
         tform (Transform): tranformation to be applied at sampling time.
     """
-    def __init__(self, root=".Ventanas_augmented", tform=None):
+    def __init__(self, root=".Ventanas", tform=None):
         super(MyDataset, self).__init__()
         self.root = root
-        self.classification = pd.read_csv(f'{self.root}/database_augmented.csv')
+        self.classification = pd.read_csv(f'{self.root}/database.csv')
         unique_classes = self.classification.clase.unique()
         self.translation = {}
         for i, j in zip(unique_classes, [k for k in range(len(unique_classes))]):
