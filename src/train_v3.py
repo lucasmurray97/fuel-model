@@ -108,6 +108,7 @@ for epoch in tqdm(range(epochs)):
 net.finish_1(epochs)
 
 net.cuda()
+early_stopper = EarlyStopper(patience=5, min_delta=0.01)
 optimizer = torch.optim.Adam(net.base_model.parameters(), lr=lr, weight_decay=wd)
 for epoch in tqdm(range(epochs)):
     for x, y in train_loader:
@@ -140,6 +141,7 @@ for epoch in tqdm(range(epochs)):
 net.finish_2(epochs)
 
 net.cuda()
+early_stopper = EarlyStopper(patience=5, min_delta=0.01)
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
 for epoch in tqdm(range(epochs)):
     for x, y in train_loader:
