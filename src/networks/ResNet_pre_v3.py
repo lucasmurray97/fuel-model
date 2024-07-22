@@ -34,6 +34,13 @@ class ResNet_Pre_18_V3(nn.Module):
           self.conv4_,
           nn.ReLU(),
         )
+        # Classifier
+        self.classifier = nn.Sequential(
+            self.base_model,
+            self.fc_1,
+            self.bn1,
+            self.fc_2
+        )
         # Loss func
         self.softmax = torch.nn.Softmax(dim=1) 
         self.loss_func = nn.CrossEntropyLoss()
@@ -48,12 +55,7 @@ class ResNet_Pre_18_V3(nn.Module):
         #print(x.shape)
         x = self.encoder(x)
         #print(x.shape)
-        x = self.base_model(x)
-        #print(x.shape)
-        x = F.relu(self.bn1(self.fc_1(x)))
-        #print(x.shape)
-        x = self.fc_2(x)
-        #print(x.shape)
+        x = self.classifier(x)
         return x
     
     
