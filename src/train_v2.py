@@ -28,7 +28,7 @@ from networks.ResNet_pre_34 import ResNet_Pre_34
 from networks.ResNet_pre_v2 import ResNet_Pre_18_V2
 from networks.utils import EarlyStopper
 sys.path.append("../")
-from data.utils import MyDataset, Resize
+from data.utils import MyDataset, Resize, AddGaussianNoise
 from torcheval.metrics import MulticlassAccuracy, MulticlassConfusionMatrix, MulticlassF1Score, MulticlassPrecision, MulticlassRecall
 import json
 import argparse
@@ -75,6 +75,7 @@ net.cuda()
 optimizer = torch.optim.Adam(net.encoder.parameters(), lr=lr, weight_decay=wd)
 horizontal_flip = v2.RandomHorizontalFlip(p=1.)
 vertical_flip = v2.RandomVerticalFlip(p=1.)
+gaussian_noise = AddGaussianNoise()
 for epoch in tqdm(range(epochs)):
     for x, y in train_loader:
         optimizer.zero_grad()
@@ -84,12 +85,15 @@ for epoch in tqdm(range(epochs)):
             h_flip = horizontal_flip(x.cuda())
             v_flip = horizontal_flip(x.cuda())
             hv_flip = horizontal_flip(h_flip)
+            noisy = gaussian_noise(x).cuda()
             pred_h = net(h_flip)
             pred_v = net(v_flip)
             pred_hv = net(hv_flip)
+            pred_noise = net(noisy)
             loss += net.train_loss(pred_h, y.cuda())
             loss += net.train_loss(pred_v, y.cuda())
             loss += net.train_loss(pred_hv, y.cuda())
+            loss += net.train_loss(pred_noise, y.cuda())
         loss.backward()
         optimizer.step()
     print(f"Training Loss: {net.epoch_loss/net.n}")
@@ -117,12 +121,15 @@ for epoch in tqdm(range(epochs)):
             h_flip = horizontal_flip(x.cuda())
             v_flip = horizontal_flip(x.cuda())
             hv_flip = horizontal_flip(h_flip)
+            noisy = gaussian_noise(x).cuda()
             pred_h = net(h_flip)
             pred_v = net(v_flip)
             pred_hv = net(hv_flip)
+            pred_noise = net(noisy)
             loss += net.train_loss(pred_h, y.cuda())
             loss += net.train_loss(pred_v, y.cuda())
             loss += net.train_loss(pred_hv, y.cuda())
+            loss += net.train_loss(pred_noise, y.cuda())
         loss.backward()
         optimizer.step()
     print(f"Training Loss: {net.epoch_loss/net.n}")
