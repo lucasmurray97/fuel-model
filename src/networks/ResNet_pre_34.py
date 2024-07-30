@@ -33,6 +33,8 @@ class ResNet_Pre_34(nn.Module):
         self.validation_loss = []
         self.val_epoch_loss = 0
         self.m = 0
+        self.augment = params["augment"]
+
 
     def forward(self, x):
         #print(x.shape)
@@ -75,7 +77,7 @@ class ResNet_Pre_34(nn.Module):
         plt.xlabel('Epochs')
         plt.ylabel('Loss')
         plt.legend()
-        plt.savefig(f"./plots/Losses_{self.name}_{epochs}.png")
+        plt.savefig(f"./plots/Losses_{self.name}_{epochs}_{self.augment}.png")
 
     def finish(self, epochs):
         self.plot_loss(epochs)

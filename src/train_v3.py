@@ -71,7 +71,7 @@ validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=b
 test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
 
 early_stopper = EarlyStopper(patience=5, min_delta=0.01)
-net = nets[network]()
+net = nets[network]({"augment": augment_data})
 print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 net.cuda()
 optimizer = torch.optim.Adam(net.encoder.parameters(), lr=lr, weight_decay=wd)
