@@ -26,6 +26,7 @@ from networks.ConvNet import ConvNet
 from networks.ResNet_pre import ResNet_Pre_18
 from networks.ResNet_pre_34 import ResNet_Pre_34
 from networks.ResNet_pre_v2 import ResNet_Pre_18_V2
+from networks.ResNet_pre_34_v2 import ResNet_Pre_34_V2
 from networks.utils import EarlyStopper
 sys.path.append("../")
 from data.utils import MyDataset, Resize, AddGaussianNoise
@@ -57,6 +58,7 @@ nets = {
     "res-net-18-pre": ResNet_Pre_18,
     "res-net-34-pre": ResNet_Pre_34,
     "res-net-18-pre-v2": ResNet_Pre_18_V2,
+    "res-net-34-pre-v2": ResNet_Pre_34_V2,
 }
 
 
@@ -69,7 +71,7 @@ dataset = MyDataset(root="../data/Ventanas", tform = transform)
 generator = torch.Generator().manual_seed(123)
 train_dataset, validation_dataset, test_dataset =torch.utils.data.random_split(dataset, [0.7, 0.15, 0.15], generator)
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
-train_loader.dataset.train_mode()
+train_dataset.dataset.train_mode(augmentations)
 validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=batch_size, drop_last=True)
 test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
 
@@ -149,7 +151,7 @@ results["accuracy_per_class"] = metric3.compute().tolist()
 results["f1"] = metric4.compute().item()
 results["precision"] = metric5.compute().item()
 results["recall"] = metric6.compute().item()
-with open(f'plots/results_{net.name}_{epochs}.json', 'w') as f:
+with open(f'plots/results_{net.name}_{epochs}_{augment_data}.json', 'w') as f:
     json.dump(results, f)
 
 confusion_matrix = metric2.compute()
@@ -161,7 +163,7 @@ ax.matshow(confusion_matrix.numpy())
 
 for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
     ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
-plt.savefig(f"plots/cfm_{net.name}_{epochs}.png")
+plt.savefig(f"plots/cfm_{net.name}_{epochs}_{augment_data}.png")
 
 metric.reset()
 metric2.reset()
@@ -186,7 +188,7 @@ results["accuracy_per_class"] = metric3.compute().tolist()
 results["f1"] = metric4.compute().item()
 results["precision"] = metric5.compute().item()
 results["recall"] = metric6.compute().item()
-with open(f'plots/results_val_{net.name}_{epochs}.json', 'w') as f:
+with open(f'plots/results_val_{net.name}_{epochs}_{augment_data}.json', 'w') as f:
     json.dump(results, f)
 
 confusion_matrix = metric2.compute()
@@ -198,5 +200,5 @@ ax.matshow(confusion_matrix.numpy())
 
 for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
     ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
-plt.savefig(f"plots/cfm_val_{net.name}_{epochs}.png")
+plt.savefig(f"plots/cfm_val_{net.name}_{epochs}_{augment_data}.png")
 

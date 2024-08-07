@@ -20,6 +20,7 @@ import os
 import rioxarray
 import sys
 from tqdm import tqdm
+import random
 sys.path.append("../src/")
 
 class MyDataset(torch.utils.data.Dataset):
@@ -28,7 +29,7 @@ class MyDataset(torch.utils.data.Dataset):
         root (str): directory where data is being stored
         tform (Transform): tranformation to be applied at sampling time.
     """
-    def __init__(self, root=".Ventanas", tform=None):
+    def __init__(self, root=".Ventanas", tform=None, augment_data=False, augmentations=None):
         super(MyDataset, self).__init__()
         self.root = root
         self.classification = pd.read_csv(f'{self.root}/database.csv')
@@ -38,6 +39,8 @@ class MyDataset(torch.utils.data.Dataset):
             self.translation[i] = j
         self.n_classes = len(self.translation)
         self.transform = tform
+        self.augment_data = augment_data
+        self.augmentations = augmentations
         imgs = os.listdir(f"{self.root}/")
         self.maxes = {}
         self.mins = {}
@@ -78,7 +81,13 @@ class MyDataset(torch.utils.data.Dataset):
             x[band] = (x[band] - self.mins[band]) / (self.maxes[band] - self.mins[band])
         if self.transform:
             x = self.transform(x)
+        if self.augment_data:
+            x = self.augmentations(x)
         return x, y
+    
+    def train_mode(self, augmentations):
+        self.augment_data = True
+        self.augmentations = augmentations
         
     
 
@@ -88,12 +97,17 @@ class Resize(object):
         return x
     
 class AddGaussianNoise(object):
-    def __init__(self, mean=0., std=0.1):
+    def __init__(self, mean=0., std=0.1, p = 0.5):
         self.std = std
         self.mean = mean
+        self.p = p
         
     def __call__(self, tensor):
-        return torch.clamp(tensor + torch.randn(tensor.size()) * self.std + self.mean, min=0., max=1.)
+        n = random.random()
+        if n < self.p:
+            return torch.clamp(tensor + torch.randn(tensor.size()) * self.std + self.mean, min=0., max=1.)
+        else:
+            return tensor
     
     def __repr__(self):
         return self.__class__.__name__ + '(mean={0}, std={1})'.format(self.mean, self.std)

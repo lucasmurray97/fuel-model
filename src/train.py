@@ -59,9 +59,14 @@ nets = {
 
 
 transform = transforms.Compose([]) if "pre" in network else  transforms.Compose([Resize()])
+horizontal_flip = v2.RandomHorizontalFlip(p=.5)
+vertical_flip = v2.RandomVerticalFlip(p=.5)
+gaussian_noise = AddGaussianNoise()
+augmentations = transforms.Compose([horizontal_flip, vertical_flip, gaussian_noise])
 dataset = MyDataset(root="../data/Ventanas", tform = transform)
 generator = torch.Generator().manual_seed(123)
 train_dataset, validation_dataset, test_dataset =torch.utils.data.random_split(dataset, [0.7, 0.15, 0.15], generator)
+train_dataset.dataset.train_mode(augmentations)
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
 validation_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=batch_size, drop_last=True)
 test_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size)
@@ -71,27 +76,11 @@ net = nets[network]({"augment": augment_data})
 print(sum(p.numel() for p in net.parameters() if p.requires_grad))
 net.cuda()
 optimizer = torch.optim.Adam(net.parameters(), lr=lr, weight_decay=wd)
-horizontal_flip = v2.RandomHorizontalFlip(p=1.)
-vertical_flip = v2.RandomVerticalFlip(p=1.)
-gaussian_noise = AddGaussianNoise()
 for epoch in tqdm(range(epochs)):
     for x, y in train_loader:
         optimizer.zero_grad()
         pred = net(x.cuda())
         loss = net.train_loss(pred, y.cuda())
-        if augment_data:
-            h_flip = horizontal_flip(x.cuda())
-            v_flip = horizontal_flip(x.cuda())
-            hv_flip = horizontal_flip(h_flip)
-            noisy = gaussian_noise(x).cuda()
-            pred_h = net(h_flip)
-            pred_v = net(v_flip)
-            pred_hv = net(hv_flip)
-            pred_noise = net(noisy)
-            loss += net.train_loss(pred_h, y.cuda())
-            loss += net.train_loss(pred_v, y.cuda())
-            loss += net.train_loss(pred_hv, y.cuda())
-            loss += net.train_loss(pred_noise, y.cuda())
         loss.backward()
         optimizer.step()
     print(f"Training Loss: {net.epoch_loss/net.n}")
@@ -132,7 +121,7 @@ results["accuracy_per_class"] = metric3.compute().tolist()
 results["f1"] = metric4.compute().item()
 results["precision"] = metric5.compute().item()
 results["recall"] = metric6.compute().item()
-with open(f'plots/results_{net.name}_{epochs}.json', 'w') as f:
+with open(f'plots/results_{net.name}_{epochs}_{augment_data}.json', 'w') as f:
     json.dump(results, f)
 
 confusion_matrix = metric2.compute()
@@ -144,7 +133,7 @@ ax.matshow(confusion_matrix.numpy())
 
 for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
     ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
-plt.savefig(f"plots/cfm_{net.name}_{epochs}.png")
+plt.savefig(f"plots/cfm_{net.name}_{epochs}_{augment_data}.png")
 
 metric.reset()
 metric2.reset()
@@ -169,7 +158,7 @@ results["accuracy_per_class"] = metric3.compute().tolist()
 results["f1"] = metric4.compute().item()
 results["precision"] = metric5.compute().item()
 results["recall"] = metric6.compute().item()
-with open(f'plots/results_val_{net.name}_{epochs}.json', 'w') as f:
+with open(f'plots/results_val_{net.name}_{epochs}_{augment_data}.json', 'w') as f:
     json.dump(results, f)
 
 confusion_matrix = metric2.compute()
@@ -181,5 +170,5 @@ ax.matshow(confusion_matrix.numpy())
 
 for (i, j), z in np.ndenumerate(confusion_matrix.numpy()):
     ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
-plt.savefig(f"plots/cfm_val_{net.name}_{epochs}.png")
+plt.savefig(f"plots/cfm_val_{net.name}_{epochs}_{augment_data}.png")
 
